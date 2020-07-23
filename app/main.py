@@ -11,7 +11,7 @@ import pymongo
 from bson.json_util import dumps
 
 # Create an instance of our Flask app.
-app = Flask(__name__, static_url_path="/static") 
+app = Flask(__name__) 
 
 # Create connection variable
 conn = os.environ['MONGODB_URI']

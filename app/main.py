@@ -14,7 +14,7 @@ from bson.json_util import dumps
 app = Flask(__name__) 
 
 # Create connection variable
-conn = os.environ['MONGODB_URI']
+conn = os.environ.get('MONGODB_URI')
 
 # Pass connection to the pymongo instance.
 dbconn = pymongo.MongoClient(conn)
@@ -189,7 +189,7 @@ def team():
     return render_template("team.html")
 
 #if __name__ == "__main__":
-# app.run()
+app.run()
 
 # @app.route("/") 
 # def home_view(): 

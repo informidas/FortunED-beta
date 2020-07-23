@@ -1,5 +1,5 @@
-from module.functions import find_tution_cost, prepare_chart_data, get_state_wage, get_job_specs, four_year_cost, bestIncomeStates, whaterfall, get_top_5_majors_list, get_top_5_states_for_loan_repay, get_pay_off_period_variation, get_median_income_by_majors, state_uni_cost_over_time
-from module.backend import transfer_data
+from functions import find_tution_cost, prepare_chart_data, get_state_wage, get_job_specs, four_year_cost, bestIncomeStates, whaterfall, get_top_5_majors_list, get_top_5_states_for_loan_repay, get_pay_off_period_variation, get_median_income_by_majors, state_uni_cost_over_time
+from backend import transfer_data
 from static.data.processed.Classification import Classify
 import datetime
 import os

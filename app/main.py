@@ -189,7 +189,7 @@ def team():
     return render_template("team.html")
 
 #if __name__ == "__main__":
-app.run()
+# app.run()
 
 # @app.route("/") 
 # def home_view(): 

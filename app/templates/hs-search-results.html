@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Boostrap & Our CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../static/css/style.css">
+
+    <!-- d3 JavaScript -->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    
+    <!-- Chart JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
+
+    <!-- JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.js"></script>
+
+    <title>FortunED - High School</title>
+  </head>
+
+  <body>
+      <div id="logo-bar" class="navbar navbar-dark bg-dark d-flex justify-content">
+        <p></p>
+        <a href="/csoptions"><button type="button" class="btn btn-warning">College</button></a>
+        <a href="/"><img
+          src="/static/img/logo_transparent.png"
+          id="logo"
+          alt="fortunED logo"></a>
+        <a href="/parents"><button type="button" class="btn btn-warning">Parents</button></a>
+        <p></p>
+      </div>
+      <div class="container">
+        <h2 class="text-center"
+  style="
+    margin-top: 25px;
+    margin-bottom: 20px;
+    margin-right: 5%;
+    color: rgb(234, 212, 15);
+  "
+>
+  Summary
+</h2>
+<hr>
+  <h4>
+  Based on your desire to attend college in
+  <span style="color: blue;">{{ tuition_data.State }}</span>, the cost is projected to be: <br/><br/>
+  <span style="color: blue;"
+    >${{ tuition_data.InState }}</span
+  > for In-State Tuition rate and <span style="color: blue;"
+    >${{ tuition_data.OutState }}</span
+  > for Out-Of-State Tuition rate.<br><br>
+  If you decide to attend <span style="color: blue;"
+  >{{tuition_data.University}}</span> here are possible career occupations for your field - <span style="color: blue;">{{ major }}</span>:</h4>
+  <table class="table" id="all_occ">
+    <thead class="thead-dark">
+      <tr>
+        <th data-field="id">#</th>
+        <th data-field="occ">Occupation</th>
+        <th data-field="deg">Degree Required</th>
+        <th data-field="low">Low Salary</th>
+        <th data-field="med">Median Salary</th>
+        <th data-field="high">High Salary</th>
+    </tr>
+    </thead>
+  </table>
+<hr>
+<h4 class="text-center">Here are the 5 Best States to work in based on median income:</h4>
+    <div class="d-flex justify-content-center"><ol class="content" id="list_top_5_states_by_salary_hs">
+    </ol></div><hr>
+  <h4>Here are specfic majors in the field {{major}}:</h4>
+      <table class="table" id="median_income_by_all_major">
+      <thead class="thead-dark">
+        <tr>
+          <th data-field="id">#</th>
+          <th data-field="maj">Major</th>
+          <th data-field="low">Low Salary</th>
+          <th data-field="med">Median Salary</th>
+          <th data-field="high">High Salary</th>
+          <th data-field="unemp">Unemployment</th>
+        </tr>
+      </thead>
+    </table><hr>
+      <div class="col-12">
+        <div class="card">
+          <ol class="text-center text-warning bg-dark" id="estimated_cost"></ol>
+          <div class="card-body">
+            <h5 class="card-title">What you'll pay for 4 years at {{dict_.uni}}</h5>
+            <p class="card-text">The number is based on your choice of <span style="text-transform: uppercase">{{io_state}}</span> tuition.
+              The total cost you end up paying may change because tuition prices can go up a little every year.
+            </p>
+          </div>
+        </div>
+      </div><hr>
+          <div class="col-12">
+              <div class="card">
+                <canvas id="tuition_change"></canvas>
+                <div class="card-body">
+                  <p class="card-text">This graphs shows how tuition costs have gone up for both In-State and Out-of-State prices, which is something to be mindful of when considering your options.</p>
+                </div>
+              </div>
+            </div>
+    </div>
+
+{% block javascript %}
+<script>
+  var occ_table = []
+
+  var counter = 0
+
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0
+  })
+
+  var job_specs = {{ job_specs | tojson}}
+
+  for (key in job_specs) {
+    var value = job_specs[key]
+    occ_table.push({
+      id: counter+1,
+      occ: key,
+      deg: value['degree_req'],
+      low: formatter.format(value['p25th']),
+      med: formatter.format(value['median']),
+      high: formatter.format(value['p75th'])
+    })
+    counter = counter+1
+  }
+
+  $('#all_occ').bootstrapTable({
+          data: occ_table,
+          pagination: true,
+          search: true
+        })
+
+  var major_income_range = {{median_income_majors|tojson}}
+  var newmajor_income_range = []
+
+  for (oc in major_income_range){
+    newmajor_income_range.push({
+            id: parseInt(oc)+1,
+            maj: major_income_range[oc]['Major'],
+            low: formatter.format(major_income_range[oc]['Low_25_Salary']),
+            med: formatter.format(major_income_range[oc]['Median_Salary']),
+            high: formatter.format(major_income_range[oc]['High_25_Salary']),
+            unemp: `${parseFloat(((major_income_range[oc]['Unemployment_Rate'])*100).toFixed(1))}%`
+        })
+    }
+
+  $('#median_income_by_all_major').bootstrapTable({
+    data: newmajor_income_range,
+    pagination: true,
+    search: true
+  })
+
+  
+  var topStates = {{ top_states | tojson }}
+  var resultcontent = '';
+  for (i = 0; i < topStates.length; i++) {
+      resultcontent += '<li>' + topStates[i] + '</li>'
+    };
+  $("#list_top_5_states_by_salary_hs").append(resultcontent);
+
+  var dict_ = {{ dict_ | tojson }}
+
+  $('#estimated_cost').append(formatter.format(dict_.cost))
+
+  var university_over_time = {{ state_college_cost_over_time | tojson }} 
+
+  var tuitionChange = document.getElementById("tuition_change");
+  Chart.defaults.global.defaultFontFamily = "Lato";
+  Chart.defaults.global.defaultFontSize = 16;
+  var dataFirst = {
+      label: "In State Tuition",
+      data: university_over_time["In-State"],
+      lineTension: 0,
+      fill: false,
+      borderColor: 'gray'
+    };
+  var dataSecond = {
+      label: "Out of State Tuition",
+      data: university_over_time["Out-of-State"],
+      lineTension: 0,
+      fill: false,
+    borderColor: 'orange'
+    };
+  var tuitionData = {
+    labels: ['2007-08', '2008-09', '2009-10', '2010-11', '2011-12', '2012-13', '2013-14', '2014-15', '2015-16', '2016-17', '2017-18', '2018-19', '2019-20', '2020-21', '2021-22'],
+    datasets: [dataFirst, dataSecond]
+  };
+  var chartOptions = {
+    title: {
+      display: true,
+      text: "Tuition Change Over Time for {{ tuition_data.University }}"
+    },
+    legend: {
+      display: true,
+      position: 'top',
+      labels: {
+        boxWidth: 80,
+        fontColor: 'black'
+      }
+    }
+  };
+  var lineChart = new Chart(tuitionChange, {
+    type: 'line',
+    data: tuitionData,
+    options: chartOptions
+  });
+</script>
+
+{% endblock %}
+<footer>© 2020 <a href="/team">FortunED</a></footer>
+</body>
+</html>

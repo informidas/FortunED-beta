@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Boostrap & Our CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../static/css/style.css">
+
+    <!-- d3 JavaScript -->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+
+    <!-- Chart JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.0/Chart.min.js"></script>
+
+    <!-- JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.js"></script>
+
+    <title>FortunED - College</title>
+</head>
+
+<body>
+    <div id="logo-bar" class="navbar navbar-dark bg-dark d-flex justify-content">
+        <p></p>
+        <a href="/hsoptions"><button type="button" class="btn btn-warning">High School</button></a>
+        <a href="/"><img src="/static/img/logo_transparent.png" id="logo" alt="fortunED logo"></a>
+        <a href="/parents"><button type="button" class="btn btn-warning">Parents</button></a>
+        <p></p>
+    </div>
+    <div class="container">
+        <h2 class="text-center" style="
+    margin-top: 25px;
+    margin-bottom: 20px;
+    margin-right: 5%;
+    color: rgb(234, 212, 15);
+  ">
+            Summary
+        </h2>
+        <hr>
+        <h4>
+            Based on your desire to live and work in
+            <span style="color: blue;">{{ coli_data.State }}</span>, the living wage for that state is:
+            <span style="color: blue;">${{ outcome[0]['living_wage'] }}</span>.
+            <br>
+            <Br>Below are some metrics for consideration. We have included some career options for comparison in your field:
+            <span style="color: blue;">{{ major }}</span
+    >.
+  </h4>  
+<hr>
+<div class="table-reponsive">
+    <table class="table"id="results">
+      <thead class="thead-dark">
+        <tr>
+          <th data-field="id">#</th>
+          <th data-field="occ">Career Option</th>
+          <th data-field="low">Low Salary</th>
+          <th data-field="med">Median Salary</th>
+          <th data-field="high">High Salary</th>
+          <th data-field="state">State Living Wage</th>
+          <th data-field="debt">Your Debt</th>
+          <th data-field="rec">Option Recommended?</th>
+        </tr>
+      </thead>
+</table>
+        </div>
+<hr>
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <canvas id="pay_off_over_time_waterfall_cs"></canvas>
+                    <div class="card-body">
+                        <h5 class="card-title">Loan Repayment Timeline</h5>
+                        <p class="card-text">This chart shows the remaining debt on your loan throughout the years
+                            considering a yearly payment of 30% of residual
+                            income.</p>
+                    </div>
+                </div>
+            </div>
+            </div>
+            <hr>
+            <div class="row">
+            <div class="col-6">
+              <div class="card">
+                  <div class="card-body">
+                      <h5 class="card-title">Top 5 Majors for {{major}}</h5>
+                      <p class="card-text">
+                          <ol class="content" id="list_top_5_majors_by_income_cs">
+                          </ol>
+                          <p>These are the Top 5 majors in your area of study, ranked by median income.</p>
+                      </p>
+                  </div>
+              </div>
+          </div>
+          <div class="col-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Top 5 States to Pay Off Loan faster</h5>
+                    <p class="card-text">
+                        <ol class="content" id="list_top_5_states_fastest_pay_off_cs">
+                        </ol>
+                        <p>These are the Top 5 States, where annual salary for your area of study is higher, enabling you to pay off your loan faster.</p>
+                    </p>
+                </div>
+            </div>
+        </div>
+        </div>
+        <hr>
+        <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <canvas id="pay_off_vs_percent_cs"></canvas>
+                <div class="card-body">
+                    <h5 class="card-title">Loan Payback Periods</h5>
+                    <p class="card-text">This chart shows how loan pay off period would vary with varied percentages of income being applied towards loan repayment.</p>
+                </div>
+            </div>
+        </div>
+        </div>
+    <hr>
+{% block javascript %}
+<script>
+
+    var outcome = {{outcome|tojson}}
+
+    var newOutcome = []
+
+    const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0
+    })
+
+    for (oc in outcome){
+        newOutcome.push({
+            id: parseInt(oc)+1,
+            occ: outcome[oc]['Occupation'],
+            low: formatter.format(outcome[oc]['Low_25_pct_income']),
+            med: formatter.format(outcome[oc]['Median_Income']),
+            high: formatter.format(outcome[oc]['High_25_pct_income']),
+            state: formatter.format(outcome[oc]['living_wage']),
+            debt: formatter.format(outcome[oc]['debt']),
+            rec: outcome[oc]['decision']
+        })
+    }
+
+    $('#results').bootstrapTable({
+        data: newOutcome,
+        pagination:true,
+        search: true
+    })
+  var waterfall = {{whaterfall_data | tojson}}
+  var years = []
+            var bars = []
+            var backgroundColors = []
+
+            Object.entries(waterfall).forEach(function ([key, value]) {
+                years.push(key)
+                if (key == 0) {
+                    year0_arr = [value.Remaining, value.Payed]
+                    bars.push(year0_arr)
+                    backgroundColors.push('#ff6e80')
+                } else {
+                    from = value.Remaining + value.Payed;
+                    to = value.Remaining
+                    year_arr = [to,from]
+                    bars.push(year_arr)
+                    backgroundColors.push('#a1ffb3')
+                }
+            });
+
+            new Chart(document.getElementById('pay_off_over_time_waterfall_cs'), {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: 'Years after college',
+                        backgroundColor: backgroundColors,
+                        data: bars
+                    }],
+                },
+                options: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Loan Amortization',
+                    },
+                    scales: {
+                        xAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            },
+                            gridLines: {
+                                display: false
+                            },
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Years after college'
+                            }
+                        }],
+                        yAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Debt Amount'
+                            }
+                        }]
+                    }
+                }
+            });          
+    
+            var top_5_majors_list = {{ best_majors | tojson }}
+            
+            var resultcontent = '';
+        for (i = 0; i < top_5_majors_list.length; i++) {
+            majors_split = top_5_majors_list[i].split(" ")
+            majors_camel_case = majors_split.map(data => data.toLowerCase().charAt(0).toUpperCase() + data.toLowerCase().slice(1).toLowerCase())
+            major = majors_camel_case.join(' ')
+            resultcontent += '<li>' + major + '</li>'
+
+        }
+
+        $("#list_top_5_majors_by_income_cs").append(resultcontent);
+
+        var top_5_states_list = {{ best_states | tojson }}
+
+        var resultcontent = '';
+        for (i = 0; i < top_5_states_list.length; i++) {
+            resultcontent += '<li>' + top_5_states_list[i] + '</li>'
+        }
+
+        $("#list_top_5_states_fastest_pay_off_cs").append(resultcontent);
+
+        // var pay_off_data = {{ pay_off_options }}
+        // console.log({{ pay_off_options["Percentages"] }})
+
+        var Percentages = {{ pay_off_options["Percentages"] }}
+        var time_to_repay = {{ pay_off_options['time_to_repay'] }}
+
+        new Chart(document.getElementById('pay_off_vs_percent_cs'), {
+            type: 'horizontalBar',
+            data: {
+                labels: Percentages,
+                datasets: [{
+                    label: 'Years to Repay Loan',
+                    backgroundColor: ['orange', 'yellow', 'lightgreen'],
+                    data: time_to_repay
+                }],
+            },
+            options: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Pay Off Period Variation',
+                },
+                scales: {
+                    xAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        },
+                        gridLines: {
+                            display: false
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Years to Repay Loan'
+                        }
+                    }],
+                    yAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: '% of Income towards Loan Repay'
+                        }
+                    }]
+                }
+            }
+        });
+
+</script>
+
+{% endblock %}
+<footer>© 2020 <a href="/team">FortunED</a></footer>
+      </body>
+
+      </html>
